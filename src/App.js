@@ -7,6 +7,7 @@ import ImageLinkForm from './components/ImageLinkForm';
 import Logo from './components/Logo';
 import Navigation from './components/Navigation';
 import Rank from './components/Rank';
+import Register from './components/Register';
 import SignIn from './components/SignIn';
 
 const Clarifai = require("clarifai");
@@ -33,7 +34,9 @@ const particleOptions = {
       this.state = {
         input: '',
         imageUrl: '',
-        box: {}
+        box: {},
+        route: 'signin',
+        isSignedIn: false
       }
     };
 
@@ -67,33 +70,55 @@ const particleOptions = {
         imageUrl: this.state.input
       })
 
-       app.models
-         .predict(
-           Clarifai.FACE_DETECT_MODEL,
-           this.state.input
-         )
-         .then((response) => {
-           this.displayFaceBox(this.calulateFaceLocation(response))
-         })
-         .catch((err) => {
-           console.log(err);
-         });
+    app.models
+      .predict(
+        Clarifai.FACE_DETECT_MODEL,
+        this.state.input
+      )
+      .then((response) => {
+        this.displayFaceBox(this.calulateFaceLocation(response))
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    };
+
+    onRouteChange = (route) => {
+      if(route === 'signout') {
+        this.setState({isSignedIn: false})
+      } else if (route === 'home') {
+        this.setState({isSignedIn: true})
+      }
+      this.setState({route: route})
     };
 
     render() {
 
+      const {isSignedIn, imageUrl, route, box} = this.state
+
       return (
         <div className="App">
           <Particles params={particleOptions} className='particles'/>
-          <Navigation />
-          <SignIn />
-          <Logo />
-          <Rank />
-          <ImageLinkForm 
-            onInputChange={this.onInputChange} 
-            onButtonSubmit={this.onButtonSubmit}
+          <Navigation onRouteChange={this.onRouteChange} isSignedIn={isSignedIn} />
+
+          { route === 'home' ? 
+            <div>
+            <Logo />
+            <Rank />
+            <ImageLinkForm 
+              onInputChange={this.onInputChange} 
+              onButtonSubmit={this.onButtonSubmit}
           />
-          <FaceRecognition box={this.state.box} imageUrl={this.state.imageUrl} /> 
+          <FaceRecognition box={box} imageUrl={imageUrl} /> 
+          </div>
+          : (
+            route === 'signin' ? 
+              <SignIn onRouteChange={this.onRouteChange} />
+              :
+              <Register onRouteChange={this.onRouteChange} />
+          )
+        }
+        
     </div>
   );
 }
